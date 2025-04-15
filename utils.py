@@ -174,18 +174,20 @@ def right_shift(x, pad=None):
     return pad(x)
 
 
-def sample(model, sample_batch_size, obs, sample_op):
+def sample(model, sample_batch_size, obs, sample_op, class_labels):
     model.train(False)
+    
     with torch.no_grad():
         data = torch.zeros(sample_batch_size, obs[0], obs[1], obs[2])
         data = data.to(next(model.parameters()).device)
         for i in range(obs[1]):
             for j in range(obs[2]):
                 data_v = data
-                out   = model(data_v, sample=True)
+                out = model(data_v, class_labels, sample=True)
                 out_sample = sample_op(out)
                 data[:, :, i, j] = out_sample.data[:, :, i, j]
     return data
+
 
 class mean_tracker:
     def __init__(self):
@@ -199,6 +201,7 @@ class mean_tracker:
     def reset(self):
         self.sum = 0
         self.count = 0
+        
          
 class ratio_tracker:
     def __init__(self):
@@ -213,9 +216,11 @@ class ratio_tracker:
         self.sum = 0
         self.count = 0
         
+        
 def check_dir_and_create(dir):
     if not os.path.exists(dir):
         os.makedirs(dir, exist_ok=True)
+        
         
 def save_images(tensor, images_folder_path, label=''):
     os.makedirs(images_folder_path, exist_ok=True)

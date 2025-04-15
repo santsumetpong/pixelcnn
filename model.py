@@ -64,8 +64,17 @@ class PixelCNN(nn.Module):
         self.nr_logistic_mix = nr_logistic_mix
         self.right_shift_pad = nn.ZeroPad2d((1, 0, 0, 0))
         self.down_shift_pad  = nn.ZeroPad2d((0, 0, 1, 0))
+        
+        self.block_size = 8 
+        self.num_classes = 4
+        
+        self.enc_emb = nn.Embedding(self.num_classes, 
+                                    nr_filters * (self.block_size**2))
+        self.dec_emb = nn.Embedding(self.num_classes, 
+                                    nr_filters * (self.block_size**2))
 
         down_nr_resnet = [nr_resnet] + [nr_resnet + 1] * 2
+        
         self.down_layers = nn.ModuleList([PixelCNNLayer_down(down_nr_resnet[i], nr_filters,
                                                 self.resnet_nonlinearity) for i in range(3)])
 
@@ -95,9 +104,9 @@ class PixelCNN(nn.Module):
         num_mix = 3 if self.input_channels == 1 else 10
         self.nin_out = nin(nr_filters, num_mix * nr_logistic_mix)
         self.init_padding = None
-
-
-    def forward(self, x, sample=False):
+        
+        
+    def forward(self, x, labels, sample=False):
         # similar as done in the tf repo :
         if self.init_padding is not sample:
             xs = [int(y) for y in x.size()]
@@ -114,6 +123,7 @@ class PixelCNN(nn.Module):
         x = x if sample else torch.cat((x, self.init_padding), 1)
         u_list  = [self.u_init(x)]
         ul_list = [self.ul_init[0](x) + self.ul_init[1](x)]
+        
         for i in range(3):
             # resnet block
             u_out, ul_out = self.up_layers[i](u_list[-1], ul_list[-1])
@@ -127,8 +137,19 @@ class PixelCNN(nn.Module):
 
         ###    DOWN PASS    ###
         u  = u_list.pop()
-        ul = ul_list.pop()
 
+        d_emb = self.enc_emb(labels.to(x.device)).view(-1, self.nr_filters, 
+                                                        self.block_size, 
+                                                        self.block_size)
+        u += d_emb
+        
+        ul = ul_list.pop()
+        
+        dr_emb = self.dec_emb(labels.to(x.device)).view(-1, self.nr_filters, 
+                                                        self.block_size, 
+                                                        self.block_size)
+        ul += dr_emb
+        
         for i in range(3):
             # resnet block
             u, ul = self.down_layers[i](u, ul, u_list, ul_list)
@@ -144,7 +165,7 @@ class PixelCNN(nn.Module):
 
         return x_out
     
-    
+
 class random_classifier(nn.Module):
     def __init__(self, NUM_CLASSES):
         super(random_classifier, self).__init__()
@@ -154,8 +175,8 @@ class random_classifier(nn.Module):
         # create a folder
         if os.path.join(os.path.dirname(__file__), 'models') not in os.listdir():
             os.mkdir(os.path.join(os.path.dirname(__file__), 'models'))
-        torch.save(self.state_dict(), os.path.join(os.path.dirname(__file__), 'models/conditional_pixelcnn.pth'))
+        torch.save(self.state_dict(), os.path.join(os.path.dirname(__file__), 
+                                                  'models/conditional_pixelcnn.pth'))
     def forward(self, x, device):
         return torch.randint(0, self.NUM_CLASSES, (x.shape[0],)).to(device)
-    
     
