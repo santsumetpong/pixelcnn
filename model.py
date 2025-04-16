@@ -64,8 +64,7 @@ class PixelCNN(nn.Module):
         self.nr_logistic_mix = nr_logistic_mix
         self.right_shift_pad = nn.ZeroPad2d((1, 0, 0, 0))
         self.down_shift_pad  = nn.ZeroPad2d((0, 0, 1, 0))
-        
-        self.block_size = 8 
+        self.block_size = 8  # refer figure 2 in Salimans et al. (also in report)
         self.num_classes = 4
         
         self.enc_emb = nn.Embedding(self.num_classes, 
@@ -136,6 +135,8 @@ class PixelCNN(nn.Module):
                 ul_list += [self.downsize_ul_stream[i](ul_list[-1])]
 
         ###    DOWN PASS    ###
+        
+        # refer figure 2 in Salimans et al. (also in report)
         u  = u_list.pop()
 
         d_emb = self.enc_emb(labels.to(x.device)).view(-1, self.nr_filters, 
