@@ -24,8 +24,26 @@ NUM_CLASSES = len(my_bidict)
 def get_label(model, model_input, device):
     # Write your code here, replace the random classifier with your trained model
     # and return the predicted label, which is a tensor of shape (batch_size,)
-    answer = model(model_input, device)
-    return answer
+    """answer = model(model_input, device)
+    return answer"""
+    b, _, _, _ = model_input.shape
+
+    lll = torch.zeros((len(my_bidict), b), device=device)
+
+    for c in my_bidict.values():
+        class_labels = torch.full((b,), c, device=device)
+
+        with torch.no_grad():
+            output = model(model_input, class_labels)
+
+            for i in range(b):
+                single_input = model_input[i:i+1]
+                single_output = output[i:i+1]
+                loss = discretized_mix_logistic_loss(single_input, single_output)
+                lll[c, i] = loss
+
+    return torch.argmin(lll, dim=0)
+
 # End of your code
 
 def classifier(model, data_loader, device):
@@ -68,10 +86,12 @@ if __name__ == '__main__':
 
     #TODO:Begin of your code
     #You should replace the random classifier with your trained model
-    model = random_classifier(NUM_CLASSES)
+    #model = random_classifier(NUM_CLASSES)
     #End of your code
-    
+    model = PixelCNN(nr_resnet=1, nr_filters=40, input_channels=3, nr_logistic_mix=5)
     model = model.to(device)
+    model = model.eval()
+    model.load_state_dict(torch.load('models/conditional_pixelcnn.pth'))
     #Attention: the path of the model is fixed to './models/conditional_pixelcnn.pth'
     #You should save your model to this path
     model_path = os.path.join(os.path.dirname(__file__), 'models/conditional_pixelcnn.pth')

@@ -40,9 +40,9 @@ def train_or_test(model, data_loader, optimizer, loss_op, device, args, epoch,
             loss.backward()
             optimizer.step()
         
-    if args.en_wandb:
+    """if args.en_wandb:
         wandb.log({mode + "-Average-BPD" : loss_tracker.get_mean()})
-        wandb.log({mode + "-epoch": epoch})
+        wandb.log({mode + "-epoch": epoch})"""
 
 
 if __name__ == '__main__':
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     
     job_name = "PCNN_Training_" + "dataset:" + args.dataset + "_" + args.tag
     
-    if args.en_wandb:
+    """if args.en_wandb:
         # start a new wandb run to track this script
         wandb.init(
             # set entity to specify your username or team name
@@ -122,7 +122,7 @@ if __name__ == '__main__':
             name=job_name,
         )
         wandb.config.current_time = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-        wandb.config.update(args)
+        wandb.config.update(args)"""
 
     #set device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -168,12 +168,12 @@ if __name__ == '__main__':
                                                    shuffle=True, 
                                                    **kwargs)
 
-        """test_loader  = torch.utils.data.DataLoader(CPEN455Dataset(root_dir=args.data_dir, 
+        test_loader  = torch.utils.data.DataLoader(CPEN455Dataset(root_dir=args.data_dir, 
                                                                   mode = 'test', 
                                                                   transform=ds_transforms), 
                                                    batch_size=args.batch_size, 
                                                    shuffle=True, 
-                                                   **kwargs)"""
+                                                   **kwargs)
         
         val_loader  = torch.utils.data.DataLoader(CPEN455Dataset(root_dir=args.data_dir, 
                                                                   mode = 'validation', 
@@ -215,14 +215,14 @@ if __name__ == '__main__':
         # decrease learning rate
         scheduler.step()
 
-        """train_or_test(model = model,
+        train_or_test(model = model,
                       data_loader = test_loader,
                       optimizer = optimizer,
                       loss_op = loss_op,
                       device = device,
                       args = args,
                       epoch = epoch,
-                      mode = 'test')"""
+                      mode = 'test')
         
         train_or_test(model = model,
                       data_loader = val_loader,
@@ -244,8 +244,8 @@ if __name__ == '__main__':
                                   sample_op, img_labels)
                 sample_t = rescaling_inv(sample_t)
                 save_images(sample_t, args.sample_dir, label)
-                sample_result = wandb.Image(sample_t, 
-                                            caption="epoch {}".format(epoch))
+                """sample_result = wandb.Image(sample_t, 
+                                            caption="epoch {}".format(epoch))"""
             
             gen_data_dir = args.sample_dir
             ref_data_dir = args.data_dir +'/test'
@@ -259,9 +259,9 @@ if __name__ == '__main__':
             except:
                 print("Dimension {:d} fails!".format(192))
                 
-            if args.en_wandb:
+            """if args.en_wandb:
                 wandb.log({"samples": sample_result,
-                            "FID": fid_score})
+                            "FID": fid_score})"""
         
         if (epoch + 1) % args.save_interval == 0: 
             if not os.path.exists("models"):
