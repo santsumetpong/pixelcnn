@@ -59,7 +59,7 @@ class PixelCNN(nn.Module):
         else :
             raise Exception('right now only concat elu is supported as resnet nonlinearity.')
 
-        self.block_size = 8 
+        self.block_size = 8  # refer Salimans et al., Figure 2 (also in report)
         self.num_classes = 4
         self.nr_filters = nr_filters
         self.input_channels = input_channels
@@ -135,6 +135,8 @@ class PixelCNN(nn.Module):
                 ul_list += [self.downsize_ul_stream[i](ul_list[-1])]
 
         ###    DOWN PASS    ###
+
+        # refer Salimans et al., Figure 2 (also in report)
         u  = u_list.pop()
 
         d_emb = self.enc_emb(labels.to(x.device)).view(-1, self.nr_filters, 
