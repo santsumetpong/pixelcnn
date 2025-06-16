@@ -1,4 +1,4 @@
-Conditional PixelCNN++ for Image Classification
+# Conditional PixelCNN++ for Image Classification
 
 
 **The goal of this project is to implement the Conditional PixelCNN++ model and train it on the given dataset.** After that, the model can both generate new images and classify the given images. **For grading, we evaluate the model based on both the generation performance and classification performance.**
